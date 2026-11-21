@@ -10,7 +10,7 @@ AutoHotkey **v1** script ([gtav_macros.ahk](gtav_macros.ahk)) with hotkeys for G
 
 ## Running
 
-Double-click `gtav_macros.ahk`, or right-click it and choose **Run with AutoHotkey v1**. To reload after editing, run it again: `#SingleInstance force` replaces the old copy.
+Double-click `gtav_macros.ahk`, or right-click it and choose **Run with AutoHotkey v1**. To reload after editing, run it again: the new copy switches to Administrator, then closes the old one, so only one copy is ever running.
 
 ## Hotkeys
 
@@ -19,6 +19,7 @@ Double-click `gtav_macros.ahk`, or right-click it and choose **Run with AutoHotk
 | Key | Action |
 |---|---|
 | **F8** | Suspend / resume all macros |
+| **F6** | Toggle mission mode: shows `MISSION MODE` on screen and shifts Interaction Menu rows up by 1, because the CEO/MC menu is missing in missions and heists. BST is disabled while it's on. |
 | **F7** | Toggle debug mode (see below) |
 | **F1** | Use Body Armor (Interaction Menu → Inventory) |
 | **F2** | Eat a Snack (Interaction Menu → Inventory) |

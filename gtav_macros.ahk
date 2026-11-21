@@ -1,13 +1,12 @@
 ﻿#NoEnv
 SetWorkingDir %A_ScriptDir%
 #IfWinActive ahk_exe GTA5_Enhanced.exe
-#SingleInstance, force
-if not A_IsAdmin
-  Run *RunAs "%A_ScriptFullPath%"
+#SingleInstance, Off               ; handled manually below (a non-admin copy can't close an admin one)
 
 ; --- Hotkeys ---  (^ = Ctrl, + = Shift, > = right-side modifier only)
 SuspendKey := "f8"                  ; F8: toggle all macros on/off
 DebugKey := "f7"                    ; F7: toggle debug mode (slow, step-by-step key presses)
+MissionKey := "f6"                  ; F6: toggle mission mode (no CEO/MC row, so menu rows shift up 1)
 KeepAwake := "f5"                   ; F5: toggle anti-AFK (taps Numpad+ every 60s)
 BST := "["                          ; [: drop Bull Shark Testosterone (CEO/MC Abilities)
 Armor := "F1"                       ; F1: use Body Armor from Inventory
@@ -24,6 +23,7 @@ InternetKillSwitchOff := ">^f6"     ; RCtrl+F6: re-enable all network adapters
 
 global KeepAwakeBool := false
 global InvLocation := 4
+global MissionMode := false         ; true in missions/heists: the CEO/MC row is missing from the menu
 global NoSaveRuleName := "GTAV Macros - No-Save Mode (block 192.81.241.171)"
 
 global ToolTip1 := false
@@ -46,10 +46,37 @@ global DebugStepDelay := 600        ; ms to wait after each key press in debug m
 global DebugPressDuration := 80     ; ms each key is held down in debug mode
 global DebugMenuDelay := 1000       ; ms to wait after opening a menu in debug mode
 
+; --- Startup: run as admin, single instance ---
+; Relaunch as Administrator, then exit this non-admin copy.
+if not A_IsAdmin {
+  try {
+    if A_IsCompiled
+      Run *RunAs "%A_ScriptFullPath%"
+    else
+      Run *RunAs "%A_AhkPath%" "%A_ScriptFullPath%"
+  }
+  ExitApp
+}
+
+; Now running as admin: close any older copy of this script so this one replaces it.
+DetectHiddenWindows, On
+SetTitleMatchMode, 2
+WinGet, oldCopies, List, %A_ScriptFullPath% ahk_class AutoHotkey
+Loop, %oldCopies% {
+  oldHwnd := oldCopies%A_Index%
+  if (oldHwnd != A_ScriptHwnd) {
+    PostMessage, 0x111, 65307,,, ahk_id %oldHwnd%   ; ask it to exit (same as tray > Exit)
+    WinWaitClose, ahk_id %oldHwnd%,, 2
+  }
+}
+DetectHiddenWindows, Off
+SetTitleMatchMode, 1
+
 SetKeyDelay, %KeySendDelay%, %KeyPressDuration%   ; default for every macro
 
 Hotkey, %SuspendKey%, SuspendToggle
 Hotkey, %DebugKey%, DebugToggle
+Hotkey, %MissionKey%, MissionToggle
 Hotkey, %EnterKey%, EnterKey
 Hotkey, %KeepAwake%, KeepAwake
 Hotkey, %BST%, BST
@@ -81,6 +108,17 @@ DebugToggle:
   }
   return
 
+MissionToggle:
+  MissionMode := !MissionMode
+  if (MissionMode) {
+    TrayTip, Mission Mode, ON - Interaction Menu rows shifted up 1 (no CEO/MC menu), 1
+    ToolTip, MISSION MODE, 10, 170, 6
+  } else {
+    TrayTip, Mission Mode, OFF, 1
+    ToolTip,,,,6
+  }
+  return
+
 EnterKey:
   Send {Enter down}
   Sleep 50
@@ -103,6 +141,11 @@ SendKeepAwake:
   return
 
 BST:
+  if (MissionMode) {                ; BST lives in the CEO/MC menu, which isn't there in missions
+    ToolTip, BST unavailable in Mission Mode, 10, 140, 7
+    SetTimer, RemoveToolTip7, -2000
+    return
+  }
   SendSeq("{" Interaction "}")
   MenuWait(IntMenuDelay)
   SendSeq("{enter}{up 3}{enter}{down}{enter}")
@@ -111,7 +154,7 @@ BST:
 Armor:
   SendSeq("{" Interaction "}")
   MenuWait(IntMenuDelay)
-  SendSeq("{down " InvLocation "}{enter}")
+  SendSeq("{down " MenuRow(InvLocation) "}{enter}")
   MenuWait(SubMenuDelay)
   SendSeq("{down 1}{enter}{up 3}{enter}{" Interaction "}")
   return
@@ -119,13 +162,13 @@ Armor:
 Snack:
   SendSeq("{" Interaction "}")
   MenuWait(IntMenuDelay)
-  SendSeq("{down " InvLocation "}{enter}")
+  SendSeq("{down " MenuRow(InvLocation) "}{enter}")
   MenuWait(SubMenuDelay)
   SendSeq("{down 2}{enter 4}{" Interaction "}")
   return
 
 Outfit:
-  StyleLocation := InvLocation + 1
+  StyleLocation := MenuRow(InvLocation + 1)
   SendSeq("{" Interaction "}")
   MenuWait(IntMenuDelay)
   SendSeq("{down " StyleLocation "}{enter}{down 3}")
@@ -175,6 +218,12 @@ SendSeq(seq) {
     pos += StrLen(m)
   }
   ToolTip,,,,4
+}
+
+; Converts a normal Interaction Menu row to the actual one: in Mission Mode the
+; CEO/MC row is missing, so everything sits one row higher.
+MenuRow(row) {
+  return MissionMode ? row - 1 : row
 }
 
 ; Waits for a menu to open: the normal delay, or DebugMenuDelay in debug mode.
@@ -335,4 +384,8 @@ RemoveToolTip2:
 
 RemoveToolTip3:
   Tooltip,,,,3
+  return
+
+RemoveToolTip7:
+  Tooltip,,,,7
   return
