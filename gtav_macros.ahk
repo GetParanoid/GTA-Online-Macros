@@ -33,9 +33,10 @@ global ToolTip3 := false
 EnterKey := "XButton1"              ; Mouse back button: press Enter
 Interaction := "m"                  ; M: your in-game Interaction Menu key (sent by macros, not a hotkey)
 
-global IntMenuDelay := 0.1
-global KeySendDelay := 50
-global KeyPressDuration := 15
+global IntMenuDelay := 150          ; ms to wait for the Interaction Menu to open
+global SubMenuDelay := 100          ; ms to wait after entering a submenu (e.g. Inventory)
+global KeySendDelay := 50           ; ms between key presses
+global KeyPressDuration := 30       ; ms each key is held (keep above one frame, ~17ms at 60fps)
 global PhoneMenuDelay := 550
 global PhoneScrollDelay := 55
 
@@ -44,6 +45,8 @@ global DebugMode := false
 global DebugStepDelay := 600        ; ms to wait after each key press in debug mode
 global DebugPressDuration := 80     ; ms each key is held down in debug mode
 global DebugMenuDelay := 1000       ; ms to wait after opening a menu in debug mode
+
+SetKeyDelay, %KeySendDelay%, %KeyPressDuration%   ; default for every macro
 
 Hotkey, %SuspendKey%, SuspendToggle
 Hotkey, %DebugKey%, DebugToggle
@@ -62,7 +65,6 @@ Hotkey, %NoSaveModeOff%, NoSaveModeOff
 Hotkey, %InternetKillSwitchOn%, InternetKillSwitchOn
 Hotkey, %InternetKillSwitchOff%, InternetKillSwitchOff
 return
-  setkeydelay, KeySendDelay, KeyPressDuration
 
 SuspendToggle:
   Suspend
@@ -109,13 +111,17 @@ BST:
 Armor:
   SendSeq("{" Interaction "}")
   MenuWait(IntMenuDelay)
-  SendSeq("{down " InvLocation "}{enter}{down 1}{enter}{up 3}{enter}{" Interaction "}")
+  SendSeq("{down " InvLocation "}{enter}")
+  MenuWait(SubMenuDelay)
+  SendSeq("{down 1}{enter}{up 3}{enter}{" Interaction "}")
   return
 
 Snack:
   SendSeq("{" Interaction "}")
   MenuWait(IntMenuDelay)
-  SendSeq("{down " InvLocation "}{enter}{down 2}{enter 4}{" Interaction "}")
+  SendSeq("{down " InvLocation "}{enter}")
+  MenuWait(SubMenuDelay)
+  SendSeq("{down 2}{enter 4}{" Interaction "}")
   return
 
 Outfit:
