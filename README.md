@@ -8,6 +8,16 @@ AutoHotkey **v1** script ([gtav_macros.ahk](gtav_macros.ahk)) with hotkeys for G
 - GTA V Enhanced (`GTA5_Enhanced.exe`). Hotkeys only work while the game window is in front.
 - The script restarts itself as Administrator, which the firewall and network toggles need.
 
+## Updating
+
+Run `update.ps1` from the script folder, either by right-clicking it and choosing **Run with PowerShell**, or with:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\update.ps1
+```
+
+It downloads the latest files from GitHub, replaces only the ones that changed (saving a `.bak` of each), and reloads the macros if they're running. Options: `-Start` launches the script even if it wasn't running, `-NoReload` only updates the files, and `-Branch <name>` downloads a different branch. It refuses to run inside a git clone (use `git pull` there) unless you pass `-Force`.
+
 ## Running
 
 Double-click `gtav_macros.ahk`, or right-click it and choose **Run with AutoHotkey v1**. To reload after editing, run it again: the new copy switches to Administrator, then closes the old one, so only one copy is ever running.
