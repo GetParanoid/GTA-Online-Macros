@@ -37,8 +37,10 @@ global IntMenuDelay := 150          ; ms to wait for the Interaction Menu to ope
 global SubMenuDelay := 100          ; ms to wait after entering a submenu (e.g. Inventory)
 global KeySendDelay := 50           ; ms between key presses
 global KeyPressDuration := 30       ; ms each key is held (keep above one frame, ~17ms at 60fps)
-global PhoneMenuDelay := 550
-global PhoneScrollDelay := 55
+global PhoneMenuDelay := 550       ; ms to wait for the phone to come up
+global ContactsOpenDelay := 500    ; ms to wait for the Contacts list to load before scrolling
+global PhoneScrollDelay := 150     ; ms between key presses while scrolling the phone
+global PhoneKeyPressDuration := 40 ; ms each key is held while scrolling the phone
 
 ; --- Debug mode ---
 global DebugMode := false
@@ -176,26 +178,29 @@ Outfit:
 
 CallSimeon:
   ; dialNumber(6115550120)
-  CallContact(1)
+  CallContact(0)
   return
 
 CallLester:
-  CallContact(15)
+  CallContact(14)
   return
 
 ; Opens the phone's Contacts list and leaves the cursor on the first contact.
 OpenContacts() {
   SendSeq("{up}")                   ; Up arrow opens the phone
   MenuWait(PhoneMenuDelay)          ; give the phone time to come up
-  SetKeyDelay, %PhoneScrollDelay%, %KeyPressDuration%
+  SetKeyDelay, %PhoneScrollDelay%, %PhoneKeyPressDuration%
   SendSeq("{right}{up}{enter}")     ; move to the Contacts app and open it
+  MenuWait(ContactsOpenDelay)       ; let the Contacts list load before scrolling
 }
 
 ; Opens Contacts, presses Up `ups` times to reach a contact, then calls them.
 CallContact(ups) {
   OpenContacts()
-  SetKeyDelay, %PhoneScrollDelay%, %KeyPressDuration%
-  SendSeq("{up " ups "}{enter}")
+  SetKeyDelay, %PhoneScrollDelay%, %PhoneKeyPressDuration%
+  SendSeq("{up " ups "}")
+  MenuWait(PhoneScrollDelay)        ; let the last scroll settle before calling
+  SendSeq("{enter}")
 }
 
 ; Sends a key sequence like "{down 4}{enter}". In debug mode, presses each key
